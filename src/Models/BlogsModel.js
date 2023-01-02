@@ -8,7 +8,7 @@ const BlogSchema=new mongoose.Schema({
     },
 
      body: {type:String,required:true},
-      authorId: {type:ObjectId,ref:'Project1Author'},
+      authorId: {type:ObjectId,ref:'Project1Author'}, 
        tags: [String], 
        category: {type:String, required:true},
         subcategory: [String], 
@@ -19,7 +19,11 @@ const BlogSchema=new mongoose.Schema({
          isPublished:{
             type:Boolean,
             default:false
+         },
+         DeletedAt:{
+            type:Date
          }
+         
                 
          
 },{timestamps:true})
