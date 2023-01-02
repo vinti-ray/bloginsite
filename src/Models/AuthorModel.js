@@ -5,10 +5,17 @@ const validateEmail = function(email) {
 
 const mongoose=require('mongoose')
 const AuthSchema=new mongoose.Schema({
-    fname: { type:String,required:true},
-     lname: {type:String,required:true}, 
-     title: {required:true, enum:['Mr', 'Mrs', 'Miss']}, 
-     email: {type: String,
+    fname: { 
+        type:String,
+        required:true},
+     lname: {
+        type:String,
+        required:true}, 
+     title: {
+        required:true, 
+        enum:['Mr', 'Mrs', 'Miss']}, 
+     email: {
+        type: String,
         validate: [validateEmail, "Please enter a valid email"], 
         unique:true
     }, 
