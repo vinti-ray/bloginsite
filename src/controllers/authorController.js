@@ -20,14 +20,14 @@ const createAuthor=async function(req,res){
                     if(mW.isValidPassword(data['password']))
                     {
                         let authors=await authorModel.create(data)
-                        res.status(201).send({msg:authors})
+                        res.status(201).send({status:true,"data":authors})
                     }else{
-                        res.status(401).send({msg:'invalid password'})
+                        res.status(401).send({status:false,"data":'invalid password'})
                     }
                 }else{
-                        res.status(401).send({msg:'invalid lastname'})
+                        res.status(401).send({status:false,"data":'invalid lastname'})
                     }}else{
-                        res.status(401).send({msg:'invalid first name'})
+                        res.status(401).send({status:false,"data":'invalid first name'})
                     }
                     
                 }
@@ -45,21 +45,22 @@ const createAuthor=async function(req,res){
 const createBook=async function(req,res){
     try{
     let data1=req.body
-    let data2=data1['authorId']
+    let data2=ObjectId(data1['authorId'])
 
     console.log(data2)
         let book=await authorModel.findOne({_id:data2})
+        
         if(book!=null){
             //data1['isPublished']=true
             let books=await blogModel.create(data1)
-            res.status(201).send({status:true,msg:books})
+            res.status(201).send({status:true,"data":books})
 
         }else{
             res.status(404).send({status:false,error:'Invalid authorId'})
         }
     }
 catch(err){
-    res.status(500).send({error:err.message})
+    res.status(400).send({error:err.message})
 
 }
  
@@ -71,7 +72,7 @@ const updateData=async function(req,res){
     try{
         const data2=req.params
         console.log(data2)
-        let id=data2['blogId']
+        let id=ObjectId(data2['blogId'])
         let abc=await blogModel.findOne({"_id":{$eq:id}})
         //return res.send({msg:abc})
         if(abc!=null){
@@ -81,31 +82,33 @@ const updateData=async function(req,res){
                 console.log(adc['tags'])
                 let gh=adc["tags"]
                 let q=await blogModel.findOneAndUpdate({"_id":id},{$push:{tags:gh},isPublished:true,publishedAt:Date.now()},{new:true})
-            return res.status(201).send({msg:q})
+            return res.status(200).send({status:true,data:q})
             }if(p.includes('body')){
                 let gh=adc["body"]
                 let q=await blogModel.findOneAndUpdate({"_id":{$eq:id}},{body:gh,isPublished:true,publishedAt:Date.now()},{new:true})
-            return res.status(201).send({msg:q})
+            return res.status(200).send({status:true,"data":q})
 
             }if(p.includes('title')){
                 let gh=adc["title"]
                 let q=await blogModel.findOneAndUpdate({"_id":{$eq:id}},{title:gh,isPublished:true,publishedAt:Date.now()},{new:true})
-            return res.status(201).send({msg:q})
+            return res.status(200).send({status:true,"data":q})
             }if(p.includes('category')){
                 let gh=adc["category"]
                 let q=await blogModel.findOneAndUpdate({"_id":{$eq:id}},{title:gh,isPublished:true,publishedAt:Date.now()},{new:true})
-            return res.status(201).send({msg:q})
+            return res.status(200).send({status:true,"data":q})
+            
+
             }else{
                 //let q=await blogModel.findOneAndUpdate({"_id":{$eq:id}},{isPublished:true,publishedAt:Date.now()},{new:true})
-            return res.status(400).send({msg:'enter valid attribute'})
+            return res.status(400).send({status:false,msg:'enter valid attribute'})
             }
         }else{
-            res.status(403).send({msg:'Authentication Fali'})
+            res.status(403).send({status:false,msg:'Authentication Fali'})
         }
     }
     
 catch(err){
-    res.status(400).send({error:err.message})
+    res.status(400).send({status:false,error:err.message})
 }
     
 }
@@ -158,13 +161,13 @@ const deleteData=async function(req,res){
     try{
     const data2=req.params
         console.log(data2)
-        let id=data2['blogId']
+        let id=ObjectId(data2['blogId'])
         let abc=await blogModel.findOne({"_id":{$eq:id},isDeleted:false})
       if(abc!=null){
         let bpq=await blogModel.findOneAndUpdate({"_id":{$eq:id},isDeleted:false},{isDeleted:true},{new:true})
-        res.status(203).send({msg:bpq})
+        res.status(200).send({status:true})
     }else{
-        res.status(404).send('data not found')
+        res.status(404).send({status:false,msg:'data not found'})
     }
         
         
@@ -172,7 +175,7 @@ const deleteData=async function(req,res){
 }
 
 catch(err){
-    return res.status(403).send({error:err.message})
+    return res.status(403).send({status:false,error:err.message})
 }
 }
 
@@ -182,19 +185,28 @@ const deleteTwo=async function(req,res){
         const data2=req.query
         console.log(data2)
         const reqatt=Object.keys(data2)        
-        if(reqatt.includes('authorId') || reqatt.includes('category') || reqatt.includes('tags') || reqatt.includes('subcatagory') || reqatt.includes('ispublished')){
+        if(reqatt.includes('authorId') || reqatt.includes('category') || reqatt.includes('tags') || reqatt.includes('subcatagory') || reqatt.includes('isPublished')){
+            if(reqatt.includes('isPublished')){
+                if(data2['isPublished']=='false'){
+                    data2['isPublished']=false
+                }else{
+                    return res.status(401).send({status:false,data:'can only delete unpublished data'})
+                }
+            }
+            console.log(data2)
             const ab=await blogModel.find(data2)
                 if(ab.length>0){
+
                    const result=await blogModel.updateMany(data2,{isDeleted:true},{new:true})
-                res.status(200).send({data:result})
+                res.status(200).send({status:true,data:result})
 
                 }else{
-                    res.status(404).send({msg:'document not found'})
+                    res.status(404).send({status:false,msg:'document not found'})
                 }
             }
         }
 catch(err){
-    res.send(err.message)
+    res.status(400).send({status:false,error:err.message})
 
 }
 }
