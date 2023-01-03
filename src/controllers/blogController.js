@@ -1,25 +1,45 @@
 const mongoose = require("mongoose");
-const getBlogData = async function (req, res) {
-    const authorId = req.query.authorId;
-    const category = req.query.category;
-    const tags = req.query.tags;
-    try {
-        if (!authorId || !category || !tags) {
-            return res.status(400).send({ error: "No data passed" });
-        }
-        else {
-            if (authorId) authorId = await blogModel.findOne().populate('authorId');
-            const getData = await blogModel.find({$or: [{ authorId: authorId },{ category: category },{ tags: tags }]});
-            
-            if (Object.keys(getData).length == 0) return res.status(404).send({ error: "Blog data doesn't exists" });
+const blogModel=require('../Models/BlogsModel')
+const ObjectId=mongoose.Types.ObjectId
 
-            res.status(200).send({ gettingData: getData })
+
+//Get data based on given querry params
+const getBlogData = async function(req,res){ 
+    try{
+    const data2=req.query
+    console.log(data2)
+    const reqatt=Object.keys(data2) 
+    
+    if(reqatt.includes('authorId') || reqatt.includes('category') || reqatt.includes('tags') || reqatt.includes('subcatagory') || reqatt.includes('ispublished')){     
+        const ab=await blogModel.find({isDeleted:false})
+        if(reqatt.includes('tags')){
+            ab.forEach((x)=>{
+                if(x['tags']==data2['tags']){
+                    data2['tags']=x
+                }
+            })
+        }
+        if(reqatt.includes('subcategory')){
+            ab.forEach((x)=>{
+                if(x['subcategory']==data2['subcategory']){
+                    data2['subcategory']=x
+                }
+            })
+
+        }
+        console.log(data2['subcategory'])
+        let abb=await blogModel.find(data2,{isDeleted:false},{isPublished:true})
+            if(abb.length>0){
+                res.status(200).send({data:abb})
+            }else{
+                res.status(404).send({error:'filtered data doesnt exist'})
+            }
         }
     }
-    catch (error) {
-        res.status(500).send({ error: error.message })
-    }
+    catch(err){
+        res.status(404).send({error:err.message})
 
+    }
 }
 module.exports.getBlogData = getBlogData;
 

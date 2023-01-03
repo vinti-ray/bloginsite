@@ -25,8 +25,8 @@ const BlogSchema=new mongoose.Schema({
          isPublished:{
             type:Boolean,
             default:false
-         }
-                
+         },
+         publishedAt:Date
          
 },{timestamps:true})
 
