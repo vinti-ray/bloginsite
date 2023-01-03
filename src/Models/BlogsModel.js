@@ -24,6 +24,9 @@ const BlogSchema=new mongoose.Schema({
          },
          DeletedAt:{
             type:Date
+         },
+         publishedAt:{
+            type:Date
          }
          
                 
