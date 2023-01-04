@@ -8,13 +8,15 @@ const route=require("./route")
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }));
 
-
+mongoose.set('strictQuery', true);
 mongoose.connect("mongodb+srv://vintiray:7091201680@cluster0.ahtxrqr.mongodb.net/test", {
     useNewUrlParser: true
 })
 
 .then( () => console.log("MongoDb is connected")) 
 .catch ( err => console.log(err) )
+
+
 
 app.use('/',route)
 

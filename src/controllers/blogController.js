@@ -1,29 +1,32 @@
 const AuthorModel = require("../Models/AuthorModel");
 const blogModel = require("../Models/BlogsModel");
 var mongoose = require("mongoose");
+const validator=require("../middlewares/commonMiddleware")
 //___________createBlog___________
 const createBlog = async function (req, res) {
-  let data = req.body;
-  if (!data.title) return res.status(404).send({ msg: "title in mandatory" });
-
-  if (!data.body) return res.status(404).send({ msg: "body in mandatory" });
-
-  if (!data.category)
-    return res.status(404).send({ msg: "category in mandatory" });
-
-  if (!data.category)
-    return res.status(404).send({ msg: "category in mandatory" });
-
-  let isValid = mongoose.Types.ObjectId.isValid(data.authorId);
-
-  if (!isValid) return res.send({ msg: "objectId is not valid" });
-
-  const isauthorIdpresent = await AuthorModel.findById(data.authorId);
-
-  if (!isauthorIdpresent) return res.send({ msg: "no author found " });
-
-  const createData = await blogModel.create(data);
-  res.send({ msg: createData });
+ try {
+	 let data = req.body;
+	  if(!data) return res.status(404).send({msg:"body is mandatory"})
+	
+	  if (!data.title) return res.status(404).send({ msg: "title in mandatory" });
+	
+	  if (!data.body) return res.status(404).send({ msg: "body in mandatory" });
+	
+	  if (!data.category)
+	    return res.status(404).send({ msg: "category in mandatory" });
+	
+	  if(!validator.isValidObjectId(data.authorId))  return res.send({ msg: "objectId is not valid" });
+	
+	
+	  const isauthorIdpresent = await AuthorModel.findById(data.authorId);
+	
+	  if (!isauthorIdpresent) return res.status(400).send({ msg: "no author found " });
+	
+	  const createData = await blogModel.create(data);
+	  res.send({ msg: createData });
+} catch (error) {
+	return res.status(500).send({ status: false, error: error.message });
+}
 };
 
 
@@ -38,25 +41,28 @@ const createBlog = async function (req, res) {
 // List of blogs that have a specific subcategory example of a query url: blogs?filtername=filtervalue&f2=fv2
 const getBlog = async function (req, res) {
 
-    let data = req.query; 
-    console.log(data); 
-    let filter={
-      isDeleted:false,
-      isPublished:true,
-      ...data
-    }
-  
-    if (Object.keys(data).includes('authorId')) {
-      let isValid = mongoose.Types.ObjectId.isValid(data.authorId);
-  
-      if (!isValid) return res.send({ msg: "authorId is not valid" });
-    }
-  
-   
-    const finddata = await blogModel.find(filter);
-    if (Object.keys(finddata).length==0) return res.send({ msg: "no user found" });
-  
-    res.send({ msg: finddata })
+try {
+	    let data = req.query; 
+	    console.log(data); 
+	    let filter={
+	      isDeleted:false,
+	      isPublished:true,
+	      ...data 
+	    }
+	    console.log(filter)
+	  
+	    if (Object.keys(data).includes('authorId')) {
+	      if(!validator.isValidObjectId(data.authorId))  return res.send({ msg: "objectId is not valid" });
+	    }
+	  
+	   
+	    const finddata = await blogModel.find(filter);
+	    if (Object.keys(finddata).length==0) return res.status(404).send({ msg: "no user found" });
+	  
+	    res.status(200).send({ msg: finddata })
+} catch (error) {
+	return res.status(500).send({ status: false, error: error.message });
+}
 
 }
 
@@ -74,11 +80,11 @@ const putData=async function(req,res){
   let isValid = mongoose.Types.ObjectId.isValid(id);
   
   if (!isValid) return res.send({ msg: "objectId is not valid" });
-  if (!id) return res.status(404).send({ msg: "blogId is missing" });
-  
+  if (!id) return res.status(404).send({ msg: "blogId is missing" }); 
+   
   const findDataFromId = await blogModel.findOne({_id:id,isDeleted:false});
 
-  if (!findDataFromId) res.send({ msg: "no data found" });
+  if (!findDataFromId) res.send({ msg: "no data found" }); 
    let toUpdateData=req.body
    if(Object.keys(toUpdateData).length==0)  return res.send({msg:"body is missing"})
 
@@ -133,30 +139,32 @@ const deleteData = async function (req, res) {
 const deleteByquery = async function (req, res) {
   let data = req.query; 
   console.log(data);
+  let filter={
+    isDeleted:false,
+    isPublished:false,
 
-  if (Object.keys(data).includes('_id')) {
+    ...data
+  }
+  console.log(filter) 
+
+  if (Object.keys(data).includes('authorId')) {
     let isValid = mongoose.Types.ObjectId.isValid(data._id);
 
     if (!isValid) return res.send({ msg: "objectId is not valid" });
   }
    
 
-  if (Object.keys(data).includes ("isPublished")) { 
-    if (data.isPublished != "false" && data.isPublished != "true") 
-      return res.send({ msg: "require boolean here" });
-  }
 
 
-  const finddata = await blogModel.findOne(data);
-  if (!finddata) return res.send({ msg: "no user found" });
-  if (finddata.isDeleted == false) {
-    const updateData = await blogModel.updateMany(data, {
-      $set: { isDeleted: true, DeletedAt: Date.now() },
-    });
-    res.send({ msg: updateData });
-  } else {
-    res.send({ msg: "blog is already deleted" });
-  }
+
+  const finddata = await blogModel.find(filter); 
+  if (Object.keys(finddata).length==0) return res.send({ msg: "no user found from query" });
+  
+  const updateData = await blogModel.updateMany(data, {
+     $set: { isDeleted: true, DeletedAt: Date.now() },
+   });
+   res.send({ msg: updateData });
+  
 };
 
 module.exports.createBlog = createBlog;

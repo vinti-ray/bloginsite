@@ -1,19 +1,51 @@
-const validateEmail = function(req,res,next) {
-    let email=req.body.email
-    const regex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
-    if(! regex.test(email))  return  res.send({msg:"enter valid email"});
+//__________________________ Import  ___________________________________________
 
-    let password =req.body.password
-    const passwordRegex=/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
-    if(!passwordRegex.test(password))   return res.send({msg:"password must contain Minimum eight characters, at least one letter, one number and one special character"})
+const mongoose = require("mongoose");
+const jwt = require("jsonwebtoken");
+const authorModel = require("../Models/AuthorModel");
+const blogModel = require("../Models/BlogsModel");
 
+//__________________________ Validations : Name ___________________________________________
 
-    next()
-
+const isValidName = function (name) {
+    const fnameRegex = /^[a-zA-Z]+$/;
+    return fnameRegex.test(name);
 };
 
+//__________________________ Validations : Email  ___________________________________________
 
+const isValidEmail = function (email) {
+    const emailRegex =
+        /^@"^([\w\.\-]+)@([\w\-]+)((\.(\w){2,3})+)$"/;
+    return emailRegex.test(email);
+};
 
+//__________________________ Validations : Password  ___________________________________________
 
+const isValidPassword = function (password) {
+    const passwordRegex =
+        /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
+    return passwordRegex.test(password);
+};
 
-module.exports.validateEmail=validateEmail
+//__________________________ Validations : Values ___________________________________________
+
+const isValidvalue = function (value) {
+    if (typeof value === "undefined" || value === null) return false;
+    if (typeof value == "string" && value.trim().length === 0) return false;
+    return true;
+};
+
+//__________________________ Validations :  ObjectId ___________________________________________
+
+const isValidObjectId = function (objectId) {
+    return mongoose.Types.ObjectId.isValid(objectId);
+};
+
+//__________________________ Export : Modules  ___________________________________________
+
+module.exports.isValidName = isValidName;
+module.exports.isValidEmail = isValidEmail;
+module.exports.isValidPassword = isValidPassword;
+module.exports.isValidvalue = isValidvalue;
+module.exports.isValidObjectId = isValidObjectId;
