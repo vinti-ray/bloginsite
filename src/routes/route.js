@@ -13,10 +13,11 @@ router.post('/authors', authController.createAuthor)
 router.post('/blogs',authController.createBook)
 router.get('/blogs',blogController.getBlogData)
 router.put("/blogs/:blogId",authController.updateData)
+
 router.delete("/blogs",authController.deleteTwo)
 
 router.get('/practice',async function(req,res){
-    let s=await blogModel.find({isPublished:true,isDeleted:false}).count()
+    let s=await blogModel.find({isDeleted:false}).count()
     res.send({msg:s})
 })
 

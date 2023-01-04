@@ -26,7 +26,8 @@ const BlogSchema=new mongoose.Schema({
             type:Boolean,
             default:false
          },
-         publishedAt:Date
+         publishedAt:Date,
+         DeletedAt:Date
          
 },{timestamps:true})
 

@@ -73,7 +73,7 @@ const updateData=async function(req,res){
         const data2=req.params
         console.log(data2)
         let id=ObjectId(data2['blogId'])
-        let abc=await blogModel.findOne({"_id":{$eq:id}})
+        let abc=await blogModel.findOne({"_id":{$eq:id},isDeleted:false})
         //return res.send({msg:abc})
         if(abc!=null){
             let adc=req.body
@@ -81,7 +81,8 @@ const updateData=async function(req,res){
             if(p.includes('tags') || p.includes('subcategory')){
                 console.log(adc['tags'])
                 let gh=adc["tags"]
-                let q=await blogModel.findOneAndUpdate({"_id":id},{$push:{tags:gh},isPublished:true,publishedAt:Date.now()},{new:true})
+                let sh=adc["subcategory"]
+                let q=await blogModel.findOneAndUpdate({"_id":id},{$push:{tags:gh,subcategory:sh},isPublished:true,publishedAt:Date.now()},{new:true})
             return res.status(200).send({status:true,data:q})
             }if(p.includes('body')){
                 let gh=adc["body"]
@@ -94,7 +95,7 @@ const updateData=async function(req,res){
             return res.status(200).send({status:true,"data":q})
             }if(p.includes('category')){
                 let gh=adc["category"]
-                let q=await blogModel.findOneAndUpdate({"_id":{$eq:id}},{title:gh,isPublished:true,publishedAt:Date.now()},{new:true})
+                let q=await blogModel.findOneAndUpdate({"_id":{$eq:id}},{category:gh,isPublished:true,publishedAt:Date.now()},{new:true})
             return res.status(200).send({status:true,"data":q})
             
 
@@ -150,10 +151,9 @@ catch(err){
 
 
 
+//------------------------nikithas------------------------------->
 
-
-
-
+//------------------nikithas end----------------------------------->
 
 //Delete blogs with blog id in path params
 
@@ -183,33 +183,73 @@ catch(err){
 const deleteTwo=async function(req,res){ 
         try{
         const data2=req.query
-        console.log(data2)
-        const reqatt=Object.keys(data2)        
-        if(reqatt.includes('authorId') || reqatt.includes('category') || reqatt.includes('tags') || reqatt.includes('subcatagory') || reqatt.includes('isPublished')){
+    if(data2){
+       // console.log(data2)
+        const reqatt=Object.keys(data2)  
+        let arr=['authorId','category','tags','subcatagory','isPublished'] 
+        let count1=0
+        let count2=0  
+        for(let i=0;i<reqatt.length;i++){
+            if(arr.includes(reqatt[i])){
+                count1++
+                console.log(reqatt[i],reqatt.length)
+        }
+    }
+        if(count1!=reqatt.length){
+            console.log(count1)
+            res.status(400).send({status:false,msg:'invalid attributes'})
+        }else{
             if(reqatt.includes('isPublished')){
                 if(data2['isPublished']=='false'){
                     data2['isPublished']=false
                 }else{
-                    return res.status(401).send({status:false,data:'can only delete unpublished data'})
+                    return res.status(400).send({status:false,data:'invalid value'})
                 }
+
             }
-            console.log(data2)
-            const ab=await blogModel.find(data2)
-                if(ab.length>0){
-
-                   const result=await blogModel.updateMany(data2,{isDeleted:true},{new:true})
+            const ab=await blogModel.find({isDeleted:false})
+            if(ab.length>0){
+            if(reqatt.includes('subcategory')){
+                ab.forEach((x)=>{
+                  let p= x['subcategory']
+                  p.forEach((y)=>{
+                    if(y==data2['subcategory']){
+                        data2['subcategory']=p
+                    }
+                  })
+                
+                })
+            }
+            if(reqatt.includes('tags')){
+                ab.forEach((x)=>{
+                  let p= x['tags']
+                  p.forEach((y)=>{
+                    if(y==data2['tags']){
+                        data2['tags']=p
+                    }
+                  })
+                
+                })
+            }
+        }else{
+            res.status(404).send({status:false,msg:'document not found'})
+        }
+    
+const result=await blogModel.updateMany(data2,{isDeleted:true,deletedAt:Date.now()},{new:true})
                 res.status(200).send({status:true,data:result})
-
-                }else{
+        }
+    
+    }else{
                     res.status(404).send({status:false,msg:'document not found'})
                 }
             }
-        }
+        
 catch(err){
     res.status(400).send({status:false,error:err.message})
 
 }
 }
+
 module.exports.deleteData=deleteData
 module.exports.deleteTwo=deleteTwo
 module.exports.createAuthor=createAuthor
