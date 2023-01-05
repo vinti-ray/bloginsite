@@ -152,7 +152,7 @@ try {
 	  console.log(data);
 	  let filter={
 	    isDeleted:false,
-	    isPublished:false,
+	    
 	
 	    ...data
 	  }
@@ -163,7 +163,11 @@ try {
 	
 	    if (!isValid) return res.send({ msg: "objectId is not valid" });
 	  }
-	   
+
+	  if(Object.keys(data).includes('isPublished')){
+		if(data['isPublished']=='false'){
+			data['isPublished']=false
+		}}
 	
 	
 	
@@ -178,7 +182,7 @@ try {
 } catch (error) {
 	return res.status(500).send({ status: false, error: error.message });
 }
-  
+   
 };
 
 module.exports.createBlog = createBlog;
