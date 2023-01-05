@@ -76,35 +76,41 @@ try {
 // Return an HTTP status 200 if updated successfully with a body like this
 // Also make sure in the response you return the updated blog document.
 const putData=async function(req,res){
-  let id = req.params.blogId;
-  let isValid = mongoose.Types.ObjectId.isValid(id);
-  
-  if (!isValid) return res.send({ msg: "objectId is not valid" });
-  if (!id) return res.status(404).send({ msg: "blogId is missing" }); 
-   
-  const findDataFromId = await blogModel.findOne({_id:id,isDeleted:false});
-
-  if (!findDataFromId) res.send({ msg: "no data found" }); 
-   let toUpdateData=req.body
-   if(Object.keys(toUpdateData).length==0)  return res.send({msg:"body is missing"})
-
-   if(Object.keys(toUpdateData).includes('title')){
-   const updateData=await blogModel.findOneAndUpdate({_id:id},{$set:{title:toUpdateData.title},isPublished:true,publishedAt:Date.now()},{new:true})
-   res.send({msg:updateData})
-   }
-   if(Object.keys(toUpdateData).includes('body')){
-    const updateData=await blogModel.findOneAndUpdate({_id:id},{$set:{body:toUpdateData.body},isPublished:true,publishedAt:Date.now()},{new:true}) 
-    res.send({msg:updateData})
-    }
- 
-   if(Object.keys(toUpdateData).includes('tags')){
-      const updateData=await blogModel.findOneAndUpdate({_id:id},{$push:{tags:toUpdateData.tags},isPublished:true,publishedAt:Date.now()},{new:true})
-      res.send({msg:updateData})
-      }
-      if(Object.keys(toUpdateData).includes('subcategory')){
-        const updateData=await blogModel.findOneAndUpdate({_id:id},{$push:{subcategory:toUpdateData.subcategory},isPublished:true,publishedAt:Date.now()},{new:true})
-        res.send({msg:updateData})
-        }
+try {
+	  let id = req.params.blogId;
+	  let isValid = mongoose.Types.ObjectId.isValid(id);
+	  
+	  if (!isValid) return res.send({ msg: "objectId is not valid" });
+	  if (!id) return res.status(404).send({ msg: "blogId is missing" }); 
+	   
+	  const findDataFromId = await blogModel.findOne({_id:id,isDeleted:false});
+	
+	  if (!findDataFromId) res.send({ msg: "no data found" }); 
+	
+	   let toUpdateData=req.body
+	   
+	   if(Object.keys(toUpdateData).length==0)  return res.send({msg:"body is missing"})
+	
+	   if(Object.keys(toUpdateData).includes('title')){
+	   const updateData=await blogModel.findOneAndUpdate({_id:id},{$set:{title:toUpdateData.title},isPublished:true,publishedAt:Date.now()},{new:true})
+	   res.send({msg:updateData})
+	   }
+	   if(Object.keys(toUpdateData).includes('body')){
+	    const updateData=await blogModel.findOneAndUpdate({_id:id},{$set:{body:toUpdateData.body},isPublished:true,publishedAt:Date.now()},{new:true}) 
+	    res.send({msg:updateData})
+	    }
+	 
+	   if(Object.keys(toUpdateData).includes('tags')){
+	      const updateData=await blogModel.findOneAndUpdate({_id:id},{$push:{tags:toUpdateData.tags},isPublished:true,publishedAt:Date.now()},{new:true})
+	      res.send({msg:updateData})
+	      }
+	      if(Object.keys(toUpdateData).includes('subcategory')){
+	        const updateData=await blogModel.findOneAndUpdate({_id:id},{$push:{subcategory:toUpdateData.subcategory},isPublished:true,publishedAt:Date.now()},{new:true})
+	        res.send({msg:updateData})
+	        }
+} catch (error) {
+	return res.status(500).send({ status: false, error: error.message });
+}
 }
 
 //_____________deleteBlogs______________//
@@ -112,58 +118,66 @@ const putData=async function(req,res){
 //Check if the blogId exists( and is not deleted). If it does, mark it deleted and return an HTTP status 200 without any response body.
 // If the blog document doesn't exist then return an HTTP status of 404 with a body like this
 const deleteData = async function (req, res) {
-  let id = req.params.blogId;
-  let isValid = mongoose.Types.ObjectId.isValid(id);
-
-  if (!isValid) return res.send({ msg: "objectId is not valid" });
-  if (!id) return res.status(404).send({ msg: "blogId is missing" });
-  
-  const findDataFromId = await blogModel.findById(id);
-  if (!findDataFromId) res.send({ msg: "no data found" });
-
-  if (findDataFromId.isDeleted == false) {
-    const updateWithDeleted = await blogModel.findOneAndUpdate(
-      id,
-      { $set: { isDeleted: true, DeletedAt: Date.now() } },
-      { new: true }
-    );
-    return res.send({ updateWithDeleted });
-  } else {
-    res.send({ msg: "blog is already deleted" });
-  }
+  try {
+	let id = req.params.blogId;
+	  let isValid = mongoose.Types.ObjectId.isValid(id);
+	
+	  if (!isValid) return res.send({ msg: "objectId is not valid" });
+	  if (!id) return res.status(404).send({ msg: "blogId is missing" });
+	  
+	  const findDataFromId = await blogModel.findById(id);
+	  if (!findDataFromId) res.send({ msg: "no data found" });
+	
+	  if (findDataFromId.isDeleted == false) {
+	    const updateWithDeleted = await blogModel.findOneAndUpdate(
+	      id,
+	      { $set: { isDeleted: true, DeletedAt: Date.now() } },
+	      { new: true }
+	    );
+	    return res.send({ updateWithDeleted });
+	  } else {
+	    res.send({ msg: "blog is already deleted" });
+	  }
+} catch (error) {
+	return res.status(500).send({ status: false, error: error.message });
+}
 };
 
 //Delete blog documents by category, authorid, tag name, subcategory name, unpublished
 //
 // If the blog document doesn't exist then return an HTTP status of 404 with a body like this
 const deleteByquery = async function (req, res) {
-  let data = req.query; 
-  console.log(data);
-  let filter={
-    isDeleted:false,
-    isPublished:false,
-
-    ...data
-  }
-  console.log(filter) 
-
-  if (Object.keys(data).includes('authorId')) {
-    let isValid = mongoose.Types.ObjectId.isValid(data._id);
-
-    if (!isValid) return res.send({ msg: "objectId is not valid" });
-  }
-   
-
-
-
-
-  const finddata = await blogModel.find(filter); 
-  if (Object.keys(finddata).length==0) return res.send({ msg: "no user found from query" });
-  
-  const updateData = await blogModel.updateMany(data, {
-     $set: { isDeleted: true, DeletedAt: Date.now() },
-   });
-   res.send({ msg: updateData });
+try {
+	  let data = req.query; 
+	  console.log(data);
+	  let filter={
+	    isDeleted:false,
+	    isPublished:false,
+	
+	    ...data
+	  }
+	  console.log(filter) 
+	
+	  if (Object.keys(data).includes('authorId')) {
+	    let isValid = mongoose.Types.ObjectId.isValid(data._id);
+	
+	    if (!isValid) return res.send({ msg: "objectId is not valid" });
+	  }
+	   
+	
+	
+	
+	
+	  const finddata = await blogModel.find(filter); 
+	  if (Object.keys(finddata).length==0) return res.send({ msg: "no user found from query" });
+	  
+	  const updateData = await blogModel.updateMany(data, {
+	     $set: { isDeleted: true, DeletedAt: Date.now() },
+	   });
+	   res.send({ msg: updateData });
+} catch (error) {
+	return res.status(500).send({ status: false, error: error.message });
+}
   
 };
 
