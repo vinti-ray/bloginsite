@@ -1,44 +1,51 @@
 const mongoose = require("mongoose");
 const blogModel=require('../Models/BlogsModel')
 const ObjectId=mongoose.Types.ObjectId
-
+const jwt=require('jsonwebtoken');
+const AuthorModel = require("../Models/AuthorModel");
+const BlogsModel = require("../Models/BlogsModel");
 
 //Get data based on given querry params
 const getBlogData = 
-
-
-//---start---
 async function (req, res) {
-  try{
-        let data = req.query; 
-        console.log(data); 
-        let filter={
-          isDeleted:false,
-          isPublished:true,
-          ...data 
+
+    try {
+        let query = req.query["authorId"];
+        let filter=req.query
+        console.log(req.query)
+        //let filter={isDeleted:false,isPublished:true}
+        let blogs=await BlogsModel.find({...filter})
+        if(blogs.length>0){
+          let count=0
+          let arr=[]
+          blogs.forEach((x)=>{
+            if(x["isDeleted"]==false && x["isPublished"]==true){
+              //console.log(x)
+              arr.push(x)
+              count++
+              //res.send("success")
+              
+            }
+          })
+          if(count==0){
+            res.send({status:false})
+          }else{
+            res.send({status:true,data:arr})
+          }
         }
-        console.log(filter)
-      
-        if (Object.keys(data).includes('authorId')) {
-          let isValid = mongoose.Types.ObjectId.isValid(data.authorId);
-      
-          if (!isValid) return res.send({ msg: "authorId is not valid" });
-        }
-      
-       
-        const finddata = await blogModel.find(filter);
-        if (Object.keys(finddata).length==0) return res.send({ msg: "no user found" });
-      
-        res.send({ msg: finddata })
+      else{
+        res.status(400).send("false")
+      }
+    }
+      catch(err){
+        res.send({staus:false,error:err.message})
+      }
     
-    }
-    catch(err){
-        res.status(404).send({status:false,error:err.message})
-    }
-  }
-      
-
-
+}
+          
+          
+        
+        
 
 
 
@@ -86,5 +93,30 @@ async function (req, res) {
 
 //     }
 // }
+
+//---------------login----------------------
+
+const login=async function(req,res){
+    let data=req.body
+    if(data){
+    let a=await AuthorModel.findOne(data)
+    if(a){
+        let token=jwt.sign({userId:a["_id"]},"functionup-Project1")
+        res.header("x-api-key",token)
+        res.status(200).send({status:true})
+    }else{
+        res.status(401).send({status:false,data:"invalid user"})
+
+    }
+}
+else{
+    res.status(400).send({status:false,msg:'enter data'})
+}
+}
+
+
+
+module.exports.login = login
+
 module.exports.getBlogData = getBlogData;
 

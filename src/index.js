@@ -8,7 +8,7 @@ const route=require("./routes/route")
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }));
 
-
+mongoose.set('strictQuery', false)
 mongoose.connect("mongodb+srv://karthikramadugu:Karthiksai1@karthikcluster.b2ikjot.mongodb.net/test", {
     useNewUrlParser: true
 })
