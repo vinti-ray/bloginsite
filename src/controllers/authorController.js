@@ -6,6 +6,7 @@ const validator=require("../middlewares/commonMiddleware")
 const creaData = async function (req, res) {
 try {
 	  let data = req.body;
+
 	  if(!data) return res.status(400).send({ msg: "body is mandatory" });
 	
 	  const { fname, lname,title, password,email }=data
@@ -69,6 +70,7 @@ try {
 	  if (!findData)  return res.status(401).send({ status: false, msg: "Invalid login credentials" });
 	
 	//token
+	
 	  const createToken=jwt.sign({id:findData._id.toString(),name:findData.fname},"new_seceret_key")
 	
 	  res.header("x-api-key",createToken)

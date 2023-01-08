@@ -35,7 +35,7 @@ const createBlog = async function (req, res) {
 	  if (!isauthorIdpresent) return res.status(400).send({ msg: "no author found " });
 	
 	  const createData = await blogModel.create(data);
-	  res.send({ msg: createData });
+	  res.status(201).send({ msg: createData });
 } catch (error) {
 	return res.status(500).send({ status: false, error: error.message });
 }
@@ -106,7 +106,7 @@ try {
         let subcategory = data.subcategory
 
    //token
-   let decodeToken=auth(req,res)
+       let decodeToken=auth(req,res)
 
 	  const findDataFromId = await blogModel.findOne({_id:id,isDeleted:false});
 
@@ -163,7 +163,7 @@ const deleteData = async function (req, res) {
 	      { $set: { isDeleted: true, DeletedAt: Date.now() } }, 
 	      { new: true } 
 	    ); 
-	    return res.send({ updateWithDeleted });
+	    return res.status(200).send({ updateWithDeleted });
 	  
 	     
 	  
@@ -202,7 +202,8 @@ try {
 	
 	
 	  const finddata = await blogModel.find(filter).select({authorId:1,_id:0}); 
-	  if (finddata.length==0) return res.status(400).send({ msg: "no user found from query" });
+
+	  if (finddata.length==0) return res.status(404).send({ msg: "no user found from query" });
 	  
 	  let decodeToken=auth(req,res)
 
@@ -212,8 +213,6 @@ try {
 
 	  if(authOne.length==0)  return res.send({msg:"you are not authorised"})
 
-
-	  console.log(auth)
 
 
     
