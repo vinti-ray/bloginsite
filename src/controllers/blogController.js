@@ -2,21 +2,33 @@ const AuthorModel = require("../Models/AuthorModel");
 const blogModel = require("../Models/BlogsModel");
 var mongoose = require("mongoose");
 const validator=require("../middlewares/commonMiddleware")
+
+
+let jwt = require("jsonwebtoken");
+const auth=function(req,res){
+	let token = req.headers["x-api-key"];
+	let decode = jwt.verify(token, "new_seceret_key")
+	return decode
+}
+
 //___________createBlog___________
 const createBlog = async function (req, res) {
  try {
-	 let data = req.body;
-	  if(!data) return res.status(404).send({msg:"body is mandatory"})
-	
+	 let data = req.body; 
+	 //body
+	 if(Object.keys(data).length==0)   return res.status(400).send({ msg: "data is mandatory" });
+
+	  
+	 
 	  if (!data.title) return res.status(404).send({ msg: "title in mandatory" });
 	
 	  if (!data.body) return res.status(404).send({ msg: "body in mandatory" });
 	
-	  if (!data.category)
-	    return res.status(404).send({ msg: "category in mandatory" });
-	
-	  if(!validator.isValidObjectId(data.authorId))  return res.send({ msg: "objectId is not valid" });
-	
+	  if (!data.category) return res.status(404).send({ msg: "category in mandatory" });
+
+	//authorId
+	  if(!validator.isValidObjectId(data.authorId))  return res.status(400).send({ msg: "authorId is not valid" });
+	if(!data.authorId)  return res.status(400).send({msg:"authorId is mandatory"})
 	
 	  const isauthorIdpresent = await AuthorModel.findById(data.authorId);
 	
@@ -52,7 +64,7 @@ try {
 	    console.log(filter)
 	  
 	    if (Object.keys(data).includes('authorId')) {
-	      if(!validator.isValidObjectId(data.authorId))  return res.send({ msg: "objectId is not valid" });
+	      if(!validator.isValidObjectId(data.authorId))  return res.status(400).send({ msg: "objectId is not valid" });
 	    }
 	  
 	   
@@ -77,37 +89,46 @@ try {
 // Also make sure in the response you return the updated blog document.
 const putData=async function(req,res){
 try {
-	  let id = req.params.blogId;
+	  let id = req.params.blogId; 
 	  let isValid = mongoose.Types.ObjectId.isValid(id);
 	  
-	  if (!isValid) return res.send({ msg: "objectId is not valid" });
+	  if (!isValid) return res.send({ msg: "blogId is not valid" });
+
 	  if (!id) return res.status(404).send({ msg: "blogId is missing" }); 
 	   
+      let data = req.body
+	  if(Object.keys(data).length==0)  return res.status(400).send({msg:"body is missing"})
+
+
+        let title = data.title 
+        let body = data.body
+        let tags = data.tags
+        let subcategory = data.subcategory
+
+   //token
+   let decodeToken=auth(req,res)
+
 	  const findDataFromId = await blogModel.findOne({_id:id,isDeleted:false});
-	
+
 	  if (!findDataFromId) res.send({ msg: "no data found" }); 
+
+       if(findDataFromId.authorId!=decodeToken.id)   return res.status(403).send({msg:"you are not authorised"})
+
 	
-	   let toUpdateData=req.body
-	   
-	   if(Object.keys(toUpdateData).length==0)  return res.send({msg:"body is missing"})
-	
-	   if(Object.keys(toUpdateData).includes('title')){
-	   const updateData=await blogModel.findOneAndUpdate({_id:id},{$set:{title:toUpdateData.title},isPublished:true,publishedAt:Date.now()},{new:true})
-	   res.send({msg:updateData})
-	   }
-	   if(Object.keys(toUpdateData).includes('body')){
-	    const updateData=await blogModel.findOneAndUpdate({_id:id},{$set:{body:toUpdateData.body},isPublished:true,publishedAt:Date.now()},{new:true}) 
-	    res.send({msg:updateData})
-	    }
-	 
-	   if(Object.keys(toUpdateData).includes('tags')){
-	      const updateData=await blogModel.findOneAndUpdate({_id:id},{$push:{tags:toUpdateData.tags},isPublished:true,publishedAt:Date.now()},{new:true})
-	      res.send({msg:updateData})
-	      }
-	      if(Object.keys(toUpdateData).includes('subcategory')){
-	        const updateData=await blogModel.findOneAndUpdate({_id:id},{$push:{subcategory:toUpdateData.subcategory},isPublished:true,publishedAt:Date.now()},{new:true})
-	        res.send({msg:updateData})
-	        }
+	  
+	 //update
+	 const updateData=await blogModel.findOneAndUpdate( 
+		{_id:id},
+		{
+			$set:{title:title,body:body},
+			$push:{tags:tags,subcategory:subcategory},
+		    $set:{isPublished:true,publishedAt:Date.now()}
+		},
+		{new:true}
+		)
+		return res.status(200).send({msg:updateData}) 
+ 
+	  
 } catch (error) {
 	return res.status(500).send({ status: false, error: error.message });
 }
@@ -120,24 +141,32 @@ try {
 const deleteData = async function (req, res) {
   try {
 	let id = req.params.blogId;
+     let decodeToken=auth(req,res)
+
+
 	  let isValid = mongoose.Types.ObjectId.isValid(id);
-	
 	  if (!isValid) return res.send({ msg: "objectId is not valid" });
 	  if (!id) return res.status(404).send({ msg: "blogId is missing" });
 	  
-	  const findDataFromId = await blogModel.findById(id);
+	  const findDataFromId = await blogModel.findOne({_id:id,isDeleted:false});
 	  if (!findDataFromId) res.send({ msg: "no data found" });
+
+
+
+	    console.log(decodeToken.id)
+
+       if(decodeToken.id!=findDataFromId.authorId)   return res.send({msg:"you are not authorised"})
+       
 	
-	  if (findDataFromId.isDeleted == false) {
 	    const updateWithDeleted = await blogModel.findOneAndUpdate(
-	      id,
-	      { $set: { isDeleted: true, DeletedAt: Date.now() } },
-	      { new: true }
-	    );
+			{_id:id,isDeleted:false},
+	      { $set: { isDeleted: true, DeletedAt: Date.now() } }, 
+	      { new: true } 
+	    ); 
 	    return res.send({ updateWithDeleted });
-	  } else {
-	    res.send({ msg: "blog is already deleted" });
-	  }
+	  
+	     
+	  
 } catch (error) {
 	return res.status(500).send({ status: false, error: error.message });
 }
@@ -156,10 +185,10 @@ try {
 	
 	    ...data
 	  }
-	  console.log(filter) 
+	//   console.log(filter) 
 	
 	  if (Object.keys(data).includes('authorId')) {
-	    let isValid = mongoose.Types.ObjectId.isValid(data._id);
+	    let isValid = mongoose.Types.ObjectId.isValid(data.authorId);
 	
 	    if (!isValid) return res.send({ msg: "objectId is not valid" });
 	  }
@@ -172,14 +201,27 @@ try {
 	
 	
 	
-	  const finddata = await blogModel.find(filter); 
-	  if (Object.keys(finddata).length==0) return res.send({ msg: "no user found from query" });
+	  const finddata = await blogModel.find(filter).select({authorId:1,_id:0}); 
+	  if (finddata.length==0) return res.status(400).send({ msg: "no user found from query" });
 	  
-	  const updateData = await blogModel.updateMany(data, {
+	  let decodeToken=auth(req,res)
+
+
+	  console.log(decodeToken.id)
+	  const authOne=finddata.filter(a=>a.authorId==decodeToken.id)
+
+	  if(authOne.length==0)  return res.send({msg:"you are not authorised"})
+
+
+	  console.log(auth)
+
+
+    
+	  const updateData = await blogModel.updateMany({authorId:decodeToken.id}, {
 	     $set: { isDeleted: true, DeletedAt: Date.now() },
 	   });
-	   res.send({ msg: updateData });
-} catch (error) {
+	   res.status(200).send({ msg: updateData }); 
+} catch (error) { 
 	return res.status(500).send({ status: false, error: error.message });
 }
    

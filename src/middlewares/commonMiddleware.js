@@ -8,7 +8,7 @@ const blogModel = require("../Models/BlogsModel");
 //__________________________ Validations : Name ___________________________________________
 
 const isValidName = function (name) {
-    const fnameRegex = /^[a-zA-Z]+$/;
+    const fnameRegex = /[a-zA-Z]{3,}/;
     return fnameRegex.test(name);
 };
 
@@ -16,7 +16,7 @@ const isValidName = function (name) {
 
 const isValidEmail = function (email) {
     const emailRegex =
-        /^@"^([\w\.\-]+)@([\w\-]+)((\.(\w){2,3})+)$"/;
+    /[a-zA-Z_1-90]{3,}@[A-za-z]{3,}[.]{1}[a-zA-Z]{2,}/;
     return emailRegex.test(email);
 };
 
@@ -24,17 +24,11 @@ const isValidEmail = function (email) {
 
 const isValidPassword = function (password) {
     const passwordRegex =
-        /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
+    /^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{6,16}$/;
     return passwordRegex.test(password);
-};
+}; 
 
-//__________________________ Validations : Values ___________________________________________
 
-const isValidvalue = function (value) {
-    if (typeof value === "undefined" || value === null) return false;
-    if (typeof value == "string" && value.trim().length === 0) return false;
-    return true;
-};
 
 //__________________________ Validations :  ObjectId ___________________________________________
 
@@ -47,5 +41,5 @@ const isValidObjectId = function (objectId) {
 module.exports.isValidName = isValidName;
 module.exports.isValidEmail = isValidEmail;
 module.exports.isValidPassword = isValidPassword;
-module.exports.isValidvalue = isValidvalue;
+
 module.exports.isValidObjectId = isValidObjectId;

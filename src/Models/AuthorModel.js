@@ -14,13 +14,15 @@ const AuthSchema = new mongoose.Schema({
     type: String,
     required: true,
     enum: ["Mr", "Mrs", "Miss"],
+    trim:true
   },
   email: {
     type: String,
     required:true,
-    unique: true
+    unique: true,
+    trim:true
   },
-  password: { type: String, required: true },
+  password: { type: String, required: true,trim:true },
 },{timestamps:true});
 
 module.exports = mongoose.model("Project1Author", AuthSchema);
